@@ -57,6 +57,7 @@ export default {
     },
     // 登录验证
     login() {
+      console.log('login start');
       this.$refs.loginFormRef.validate(async valid => {
         if (!valid) return;
         const { data: res } = await this.$http.post("login", this.loginForm);
@@ -74,8 +75,9 @@ export default {
           message:"登录成功",
           type: "success"
         })
+        console.log('token start');
         // 1.验证登录成功，使用 token 完成用户在不同页面的验证
-        console.log(res.data);
+        // console.log(res.data);
         //  1.1 从后台获取到 token 数据 保存在 sessionStorage 中
         window.sessionStorage.setItem('token', res.data.token);
         // 1.2 完成验证和存储，跳转到主页
