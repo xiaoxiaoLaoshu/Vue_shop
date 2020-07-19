@@ -78,6 +78,7 @@
 								type="warning"
 								icon="el-icon-setting"
 								size="mini"
+								@click="setRole(scope.row)"
 							></el-button>
 						</el-tooltip>
 					</template>
@@ -153,8 +154,34 @@
 				</el-form-item>
 			</el-form>
 			<span slot="footer" class="dialog-footer">
-				<el-button @click="editDialogVisable = fnalse">取 消</el-button>
+				<el-button @click="editDialogVisable = false">取 消</el-button>
 				<el-button type="primary" @click="eidtUserInfo">确 定</el-button>
+			</span>
+		</el-dialog>
+		<!-- 分配角色的对话框 -->
+		<el-dialog
+			title="分配角色"
+			:visible.sync="setRoleDialogVisible"
+			width="50%"
+			@close="setRoleDialogClose"
+		>
+			<p>当前的用户：{{userInfo.username}}</p>
+			<p>当前的角色：{{userInfo.role_name}}</p>
+			<!-- 选择角色的下拉菜单 -->
+			<el-select v-model="selectRoleId" placeholder="请选择">
+				<el-option
+					v-for="item in roleList"
+					:key="item.id"
+					:label="item.roleName"
+					:value="item.id"
+				>
+				</el-option>
+			</el-select>
+			<span slot="footer" class="dialog-footer">
+				<el-button @click="setRoleDialogVisible = false">取 消</el-button>
+				<el-button type="primary" @click="saveRoleInfo"
+					>确 定</el-button
+				>
 			</span>
 		</el-dialog>
 	</div>
@@ -252,38 +279,21 @@
 						{ validator: checkMobile, trigger: 'blur' },
 					],
 				},
-				// 根据Id删除用户的信息
-				async removeUserById(id) {
-					// 弹框询问用户是否删除数据
-					const confirmResult = await this.$confirm(
-						'此操作将永久删除该用户信息, 是否继续?',
-						'提示',
-						{
-							confirmButtonText: '确定',
-							cancelButtonText: '取消',
-							type: 'warning',
-						}
-					).catch((err) => err)
-					// 如果用户取消删除，输入字符串 cancel
-					// 如果用户确认删除，输入字符串 confirm
-					console.log(confirmResult);
-					if (confirmResult !== 'confirm') {
-						return this.$message.info('已经取消删除')
-          }
-          const {data: res} = await this.$http.delete('users/' + id)
-
-          if(res.meta.status !== 200) {
-            return this.$message.error('删除用户失败')
-          }
-          this.$message.success('删除用户成功')
-          this.getUserList()
-				},
+				// 控制分配角色对话框的显示与隐藏
+				setRoleDialogVisible: false,
+				// 需要分配角色的信息
+				userInfo: {},
+				// 所有角色的数据列表
+				roleList: [],
+				// 已选中的角色ID值
+				selectRoleId: '',
 			}
 		},
 		created() {
 			this.getUserList()
 		},
 		methods: {
+			// 获取用户列表信息
 			async getUserList() {
 				const { data: res } = await this.$http.get('users', {
 					params: this.queryInfo,
@@ -324,7 +334,7 @@
 			addDialogClosed() {
 				this.$refs.addFormRef.resetFields()
 			},
-			// 点击按钮，添加用户
+			// 点击添加用户按钮，添加用户
 			addUser() {
 				this.$refs.addFormRef.validate(async (vaild) => {
 					console.log('addUser start')
@@ -380,6 +390,64 @@
 					this.$message.success('更新用户信息成功')
 				})
 			},
+			// 根据Id删除用户的信息
+			async removeUserById(id) {
+				// 弹框询问用户是否删除数据
+				const confirmResult = await this.$confirm(
+					'此操作将永久删除该用户信息, 是否继续?',
+					'提示',
+					{
+						confirmButtonText: '确定',
+						cancelButtonText: '取消',
+						type: 'warning',
+					}
+				).catch((err) => err)
+				// 如果用户取消删除，输入字符串 cancel
+				// 如果用户确认删除，输入字符串 confirm
+				console.log(confirmResult)
+				if (confirmResult !== 'confirm') {
+					return this.$message.info('已经取消删除')
+				}
+				const { data: res } = await this.$http.delete('users/' + id)
+
+				if (res.meta.status !== 200) {
+					return this.$message.error('删除用户失败')
+				}
+				this.$message.success('删除用户成功')
+				this.getUserList()
+			},
+			// 点击显示分配角色的显示
+			async setRole(userInfo) {
+				this.userInfo = userInfo
+				// 在展开对话框之前，获取所有角色信息
+				const { data: res } = await this.$http.get('roles')
+				if (res.meta.status !== 200) {
+					return this.$message.error('获取所有角色信息失败')
+				}
+				this.roleList = res.data
+				// console.log(this.userInfo)
+
+				this.setRoleDialogVisible = true
+			},
+			// 点击按钮，分配角色
+			async saveRoleInfo() {
+				if(!this.selectRoleId){
+					return this.$message.error('请选择要分配的角色')
+				}
+
+				const {data:res} = await this.$http.put(`users/${this.userInfo.id}/role`,{rid: this.selectRoleId})
+				if(res.meta.status !== 200) {
+					return this.$message.error('修改用户角色失败')
+				}
+				this.$message.success('更新角色成功')
+				this.getUserList()
+				this.setRoleDialogVisible = false
+			},
+			// 监听分配角色对话框的关闭事件
+			setRoleDialogClose() {
+				this.userInfo = ''
+				this.selectRoleId = ''
+			}			
 		},
 	}
 </script>

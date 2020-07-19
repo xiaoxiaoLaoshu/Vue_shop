@@ -15,3 +15,7 @@
 .el-pagination {
   margin-top: 15px;
 }
+
+#app {
+  min-width: 1366px;
+}
