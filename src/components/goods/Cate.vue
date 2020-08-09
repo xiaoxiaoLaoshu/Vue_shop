@@ -48,7 +48,7 @@
 				</template>
 				<!-- 操作 -->
 				<template slot="opt" slot-scope="scope">
-					<el-button type="primary" size="mini" icon="el-icon-edit"
+					<el-button type="primary" size="mini" icon="el-icon-edit" @click="editCate(scope.row)"
 						>编辑</el-button
 					>
 					<el-button type="danger" size="mini" icon="el-icon-delete"
