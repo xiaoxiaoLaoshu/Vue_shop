@@ -140,218 +140,218 @@
 <script>
 	import _ from 'lodash'
 
-		export default {
-			data() {
-				return {
-					activeIndex: '0',
-					// 添加商品的表单数据对象
-					addForm: {
-						goods_name: '',
-						goods_price: 0,
-						goods_weight: 0,
-						goods_number: 0,
-						// 商品所属的分类数组
-						goods_cat: [],
-						// 图片对象
-						pics: [],
-						// 商品详情描述
-						goods_introduce: '',
-						// 参数
-						attrs: []
-					},
-					// 添加商品分类表单的验证规则
-					addFormRules: {
-						goods_name: [
-							{ required: true, message: '请输入商品名称', trigger: 'blur' },
-						],
-						goods_price: [
-							{ required: true, message: '请输入商品价格', trigger: 'blur' },
-						],
-						goods_weight: [
-							{ required: true, message: '请输入商品重量', trigger: 'blur' },
-						],
-						goods_number: [
-							{ required: true, message: '请输入商品数量', trigger: 'blur' },
-						],
-						goods_cat: [
-							{ required: true, message: '请选中商品分类数据', trigger: 'blur' },
-						],
-					},
-					// 所有商品分类数据
-					cateList: [],
-					// 商品分类的验证规则
-					cateListProps: {
-						label: 'cat_name',
-						value: 'cat_id',
-						children: 'children',
-					},
-					// 商品动态参数列表
-					manyTabData: [],
-					// 商品静态属性列表
-					onlyTabData: [],
-					// 图片上传的URL地址
-					uploadURL: 'http://127.0.0.1:8888/api/private/v1/upload',
-					// 图片上传组件的header请求头对象
-					headerObj: {
-						Authorization: window.sessionStorage.getItem('token'),
-					},
-					// 预览图片的路径
-					previewPath: '',
-					// 图片预览的显示与隐藏
-					pictureDialogVisible: false,
+	export default {
+		data() {
+			return {
+				activeIndex: '0',
+				// 添加商品的表单数据对象
+				addForm: {
+					goods_name: '',
+					goods_price: 0,
+					goods_weight: 0,
+					goods_number: 0,
+					// 商品所属的分类数组
+					goods_cat: [],
+					// 图片对象
+					pics: [],
+					// 商品详情描述
+					goods_introduce: '',
+					// 参数
+					attrs: [],
+				},
+				// 添加商品分类表单的验证规则
+				addFormRules: {
+					goods_name: [
+						{ required: true, message: '请输入商品名称', trigger: 'blur' },
+					],
+					goods_price: [
+						{ required: true, message: '请输入商品价格', trigger: 'blur' },
+					],
+					goods_weight: [
+						{ required: true, message: '请输入商品重量', trigger: 'blur' },
+					],
+					goods_number: [
+						{ required: true, message: '请输入商品数量', trigger: 'blur' },
+					],
+					goods_cat: [
+						{ required: true, message: '请选中商品分类数据', trigger: 'blur' },
+					],
+				},
+				// 所有商品分类数据
+				cateList: [],
+				// 商品分类的验证规则
+				cateListProps: {
+					label: 'cat_name',
+					value: 'cat_id',
+					children: 'children',
+				},
+				// 商品动态参数列表
+				manyTabData: [],
+				// 商品静态属性列表
+				onlyTabData: [],
+				// 图片上传的URL地址
+				uploadURL: 'http://127.0.0.1:8888/api/private/v1/upload',
+				// 图片上传组件的header请求头对象
+				headerObj: {
+					Authorization: window.sessionStorage.getItem('token'),
+				},
+				// 预览图片的路径
+				previewPath: '',
+				// 图片预览的显示与隐藏
+				pictureDialogVisible: false,
+			}
+		},
+		created() {
+			this.getCateList()
+		},
+		methods: {
+			// 获取所有商品分类数据
+			async getCateList() {
+				const { data: res } = await this.$http.get('categories')
+
+				// console.log(res.data)
+				if (res.meta.status !== 200) {
+					return this.$message.error('获取所有商品分类失败')
+				}
+
+				this.$message.success('获取商品分类成功')
+				this.cateList = res.data
+			},
+			// 级联选择器选中项变化，会触发这个函数
+			handleChange() {
+				// 未选中三级商品分类
+				if (this.addForm.goods_cat.length !== 3) {
+					this.addForm.goods_cat = []
+				}
+				console.log(this.addForm.goods_cat)
+			},
+			// Tab切换前触发的事件
+			beforeTabLeave(activeName, oldActiveName) {
+				if (oldActiveName === '0' && this.addForm.goods_cat.length !== 3) {
+					this.$message.error('请先选择商品分类!')
+					return false
 				}
 			},
-			created() {
-				this.getCateList()
-			},
-			methods: {
-				// 获取所有商品分类数据
-				async getCateList() {
-					const { data: res } = await this.$http.get('categories')
+			// Tab切换触发的事件
+			async changeTab() {
+				// 证明访问的是动态参数面板
+				if (this.activeIndex === '1') {
+					const { data: res } = await this.$http.get(
+						`categories/${this.cateId}/attributes`,
+						{
+							params: {
+								sel: 'many',
+							},
+						}
+					)
 
-					// console.log(res.data)
 					if (res.meta.status !== 200) {
-						return this.$message.error('获取所有商品分类失败')
+						return this.$message.error('获取该商品ID的动态参数列表失败')
 					}
 
-					this.$message.success('获取商品分类成功')
-					this.cateList = res.data
-				},
-				// 级联选择器选中项变化，会触发这个函数
-				handleChange() {
-					// 未选中三级商品分类
-					if (this.addForm.goods_cat.length !== 3) {
-						this.addForm.goods_cat = []
-					}
-					console.log(this.addForm.goods_cat)
-				},
-				// Tab切换前触发的事件
-				beforeTabLeave(activeName, oldActiveName) {
-					if (oldActiveName === '0' && this.addForm.goods_cat.length !== 3) {
-						this.$message.error('请先选择商品分类!')
-						return false
-					}
-				},
-				// Tab切换触发的事件
-				async changeTab() {
-					// 证明访问的是动态参数面板
-					if (this.activeIndex === '1') {
-						const { data: res } = await this.$http.get(
-							`categories/${this.cateId}/attributes`,
-							{
-								params: {
-									sel: 'many',
-								},
-							}
-						)
+					console.log(res.data)
 
-						if (res.meta.status !== 200) {
-							return this.$message.error('获取该商品ID的动态参数列表失败')
-						}
-
-						console.log(res.data)
-
-						res.data.forEach((item) => {
-							item.attr_vals =
-								item.attr_vals.length === 0 ? '' : item.attr_vals.split(' ')
-						})
-						this.manyTabData = res.data
-					} else if (this.activeIndex === '2') {
-						// 访问的是商品属性面板
-						const { data: res } = await this.$http.get(
-							`categories/${this.cateId}/attributes`,
-							{
-								params: {
-									sel: 'only',
-								},
-							}
-						)
-
-						if (res.meta.status !== 200) {
-							return this.$message.error('获取该商品ID的静态属性列表失败')
-						}
-
-						console.log(res.data)
-
-						this.onlyTabData = res.data
-					}
-				},
-				// 处理图片预览效果
-				handlePreview(file) {
-					console.log(file)
-					this.previewPath = file.response.data.url
-
-					this.pictureDialogVisible = true
-				},
-				// 处理图片移出效果
-				handleRemove(file) {
-					console.log(file)
-					// 1.获取到将要删除的图片的临时路径
-					const filePath = file.tmp_path
-					// 2.查找到将要删除图片的索引值
-					const i = this.addForm.pics.findIndex((x) => x.pic === filePath)
-					// 3.调用数组的 splice 方法，把图片信息对象，，从 pics 数组中移除
-					this.addForm.pics.splice(i, 1)
-					console.log(this.addForm)
-				},
-				// 处理成功上传图片的数据
-				handleSuccess(response) {
-					console.log(response)
-					// 1.拼接得到一个图片信息对象
-					const picInfo = { pic: response.data.tmp_path }
-					// 2.将图片信息对象，push到 pics 数组中
-					this.addForm.pics.push(picInfo)
-					console.log(this.addForm)
-				},
-				// 添加商品
-				add() {
-					this.$refs.addFormRef.validate(async(valid) => {
-						if(!valid) {
-							return this.$message.error('请完成商品信息的填写!')
-						}
-						// this.addForm.goods_cat = this.addForm.goods_cat.join(',')
-						// console.log(this.addForm);
-						// 为了解决 addFrom.goods_cat 转为 字符串后，无法动态响应到级联选择器上，深拷贝出一个新的对象来替代 addForm
-						const form = _.cloneDeep(this.addForm)
-						form.goods_cat = form.goods_cat.join(',')
-						// 将动态参数和静态属性合并到一个数组中
-						// 处理动态参数
-						this.manyTabData.forEach(item => {
-							const obj = {}
-							obj.attr_id = item.attr_id
-							obj.attr_value = item.attr_vals
-							this.addForm.attrs.push(obj)
-						})
-						// 处理静态属性
-						this.onlyTabData.forEach(item => {
-							const obj = {}
-							obj.attr_id = item.attr_id
-							obj.attr_value = item.attr_vals
-							this.addForm.attrs.push(obj)
-						})
-						form.attrs = this.addForm.attrs
-						console.log(form);
-						// 发送请求
-						const {data:res} = await this.$http.post(`goods`, form)
-
-						if(res.meta.status !== 201) {
-							return this.$message.error('添加商品失败！')
-						}
-
-						this.$message.success('添加商品成功')
-						this.$router.push('/goods')
+					res.data.forEach((item) => {
+						item.attr_vals =
+							item.attr_vals.length === 0 ? '' : item.attr_vals.split(' ')
 					})
-				},
-			},
-			computed: {
-				cateId() {
-					if (this.addForm.goods_cat.length === 3) {
-						return this.addForm.goods_cat[2]
+					this.manyTabData = res.data
+				} else if (this.activeIndex === '2') {
+					// 访问的是商品属性面板
+					const { data: res } = await this.$http.get(
+						`categories/${this.cateId}/attributes`,
+						{
+							params: {
+								sel: 'only',
+							},
+						}
+					)
+
+					if (res.meta.status !== 200) {
+						return this.$message.error('获取该商品ID的静态属性列表失败')
 					}
-					return null
-				},
+
+					console.log(res.data)
+
+					this.onlyTabData = res.data
+				}
 			},
-		}
+			// 处理图片预览效果
+			handlePreview(file) {
+				console.log(file)
+				this.previewPath = file.response.data.url
+
+				this.pictureDialogVisible = true
+			},
+			// 处理图片移出效果
+			handleRemove(file) {
+				console.log(file)
+				// 1.获取到将要删除的图片的临时路径
+				const filePath = file.tmp_path
+				// 2.查找到将要删除图片的索引值
+				const i = this.addForm.pics.findIndex((x) => x.pic === filePath)
+				// 3.调用数组的 splice 方法，把图片信息对象，，从 pics 数组中移除
+				this.addForm.pics.splice(i, 1)
+				console.log(this.addForm)
+			},
+			// 处理成功上传图片的数据
+			handleSuccess(response) {
+				console.log(response)
+				// 1.拼接得到一个图片信息对象
+				const picInfo = { pic: response.data.tmp_path }
+				// 2.将图片信息对象，push到 pics 数组中
+				this.addForm.pics.push(picInfo)
+				console.log(this.addForm)
+			},
+			// 添加商品
+			add() {
+				this.$refs.addFormRef.validate(async (valid) => {
+					if (!valid) {
+						return this.$message.error('请完成商品信息的填写!')
+					}
+					// this.addForm.goods_cat = this.addForm.goods_cat.join(',')
+					// console.log(this.addForm);
+					// 为了解决 addFrom.goods_cat 转为 字符串后，无法动态响应到级联选择器上，深拷贝出一个新的对象来替代 addForm
+					const form = _.cloneDeep(this.addForm)
+					form.goods_cat = form.goods_cat.join(',')
+					// 将动态参数和静态属性合并到一个数组中
+					// 处理动态参数
+					this.manyTabData.forEach((item) => {
+						const obj = {}
+						obj.attr_id = item.attr_id
+						obj.attr_value = item.attr_vals
+						this.addForm.attrs.push(obj)
+					})
+					// 处理静态属性
+					this.onlyTabData.forEach((item) => {
+						const obj = {}
+						obj.attr_id = item.attr_id
+						obj.attr_value = item.attr_vals
+						this.addForm.attrs.push(obj)
+					})
+					form.attrs = this.addForm.attrs
+					console.log(form)
+					// 发送请求
+					const { data: res } = await this.$http.post(`goods`, form)
+
+					if (res.meta.status !== 201) {
+						return this.$message.error('添加商品失败！')
+					}
+
+					this.$message.success('添加商品成功')
+					this.$router.push('/goods')
+				})
+			},
+		},
+		computed: {
+			cateId() {
+				if (this.addForm.goods_cat.length === 3) {
+					return this.addForm.goods_cat[2]
+				}
+				return null
+			},
+		},
+	}
 </script>
 
 <style lang="less" scoped>
